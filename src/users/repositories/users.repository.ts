@@ -1,40 +1,34 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { User } from '../entities/user.entity';
-import { Model } from 'mongoose';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { InjectModel } from '@nestjs/sequelize';
 
 @Injectable()
 export class UserRepository {
-  constructor(@InjectModel(User.name) private usersModel: Model<User>) {}
+  constructor(@InjectModel(User) private usersModel: typeof User) {}
+
   async create(data: CreateUserDto): Promise<User> {
-    const newUser = await this.usersModel.create(data);
-    newUser.save();
-    return newUser;
+    return this.usersModel.create(data);
   }
+
   async findAll(): Promise<User[]> {
-    const users = await this.usersModel.find();
-    return users;
+    return this.usersModel.findAll({ include: { all: true } });
   }
-  async findOne(id: string): Promise<User> {
-    const user = await this.usersModel.findOne({ id });
-    return user;
+
+  async findOne(id: number): Promise<User | null> {
+    return this.usersModel.findByPk(id, { include: { all: true } });
   }
-  async findByEmail(email: string): Promise<User> {
-    const user = await this.usersModel.findOne({ email });
-    return user;
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersModel.findOne({ where: { email } });
   }
-  async updateById(id: string, data: UpdateUserDto): Promise<User> {
-    const updatedUser = await this.usersModel.findOneAndUpdate(
-      { id },
-      { data },
-      { new: true },
-    );
-    return updatedUser;
+
+  async updateById(id: number, data: UpdateUserDto): Promise<[number, User[]]> {
+    return this.usersModel.update(data, { where: { id }, returning: true });
   }
-  async deletebyId(id: string): Promise<User> {
-    const deletedUser = await this.usersModel.findOneAndDelete({ id });
-    return deletedUser;
+
+  async deleteById(id: number): Promise<number> {
+    return this.usersModel.destroy({ where: { id } });
   }
 }

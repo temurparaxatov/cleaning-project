@@ -1,25 +1,31 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
-import { v4 as uuidv4 } from 'uuid';
+import { Column, DataType, Model, Table } from 'sequelize-typescript';
 
-export type UserDocument = HydratedDocument<User>;
-
-@Schema()
-export class User {
-  @Prop({ default: uuidv4 })
-  id: string;
-
-  @Prop({ required: true })
-  name: string;
-
-  @Prop({ required: true, unique: true })
+interface UserCreationAttr {
+  fullname: string;
   email: string;
-
-  @Prop({ required: true })
   password: string;
-
-  @Prop({ default: false })
-  is_active: boolean;
+  isActive: boolean;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+@Table({ tableName: 'users' })
+export class User extends Model<User, UserCreationAttr> {
+  @Column({
+    type: DataType.INTEGER,
+    unique: true,
+    autoIncrement: true,
+    primaryKey: true,
+  })
+  id: number;
+
+  @Column({ type: DataType.STRING })
+  fullname: string;
+
+  @Column({ type: DataType.STRING })
+  email: string;
+
+  @Column({ type: DataType.STRING })
+  password: string;
+
+  @Column({ type: DataType.BOOLEAN, defaultValue: true })
+  isActive: boolean;
+}
